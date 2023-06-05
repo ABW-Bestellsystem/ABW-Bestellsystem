@@ -223,6 +223,7 @@ configureCompose() {
     # parse the api port and write it to the .env file, standard: 42069
     apiport=$(echo $apiurl | grep -oP ':\K[^/]*')
     apiport="${apiport:-42069}"
+    echo "API_PORT=$apiport" >> $INSTALL_REPO/${GIT_NAME}/.env
     
     # ask what the first user should be called (standard: admin)
     printf "%b${GREEN}What should be the first user called? (standard: admin, min. length 3) ${RESET}\\n"

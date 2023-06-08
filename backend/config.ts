@@ -135,9 +135,7 @@ class TokenHandler {
           new EditorModel<IEditorSchema>({
             _id: this.EditorID,
             tokens: newTokens,
-            editorKey: generateNewEditorKey(),
-            firstAdded: new Date(),
-            lastUsed: new Date(),
+            latest_version: '0.0.0',
           }).save().catch((err: CallbackError) => {
             logger.error(`Error while saving new EditorSettings!`, {
               stack: err,

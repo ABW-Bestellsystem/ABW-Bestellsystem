@@ -139,8 +139,8 @@ const Footer = (props: any) => {
       </Offcanvas>
 
       <div className="info">
-        This App is developed and maintained by{' '}
-        <a href="https://github.com/riko2909">Riko</a> and Nils |{'  '}
+        This App is developed by{' '}
+        <a href="https://github.com/riko2909">Riko</a> | {'  '}
         <Link to={'/privacyinfo'}>Datenschutzinfo</Link>
       </div>
       <div

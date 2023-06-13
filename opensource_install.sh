@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Define colors
 RED='\033[0;31m'
+GREY='\033[0;90m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 BLUE='\033[0;34m'
@@ -46,8 +47,7 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
-# try to use curl and if get error, configure proxy on /etc/environment
-if ! curl -sSf https://www.google.com; then
+if ! curl -sSf https://google.com > /dev/null; then
     printf "%b${RED}Curl is not configured${RESET}\\n"
     printf "%b${GREEN}Configuring Curl${RESET}\\n"
     printf "%b${YELLOW}If you are behind a proxy, please enter the proxy-url with optional username and password${RESET}\\n"
@@ -113,7 +113,7 @@ if ! command_exists docker; then
 fi
 
 # check if docker compose is installed, if not install it
-if ! command_exists 'docker compose'; then
+if ! command_exists docker compose; then
     printf "%b${RED}Docker-Compose is not installed${RESET}\\n"
     install_dockerparts
 fi
@@ -311,7 +311,7 @@ main() {
     # display menu
     clear
     while [ "$choice" != "8" ]; do
-        
+        printf "%b${GREY}-------------------------------------------------------${RESET}\\n"
         printf "%b${GREEN}What do you want to do?${RESET}\\n"
         printf "%b${GREEN}1)${WHITE} Install${RESET}\\n"
         printf "%b${GREEN}2)${WHITE} Update${RESET}\\n"
@@ -320,7 +320,12 @@ main() {
         printf "%b${GREEN}5)${WHITE} Stop Docker-Compose${RESET}\\n"
         printf "%b${GREEN}6)${WHITE} Restart Docker-Compose${RESET}\\n"
         printf "%b${GREEN}7)${WHITE} Recompile Docker-Compose${RESET}\\n"
-        printf "%b${GREEN}8)${WHITE} Exit${RESET}\\n"
+        printf "${GREY}------------------------ ${WHITE}DEBUG${GREY} ------------------------${RESET}\\n"
+        printf "%b${GREEN}8)${WHITE} Connect to MongoDB-Container${RESET}\\n"
+        printf "%b${GREEN}9)${WHITE} Connect to Backend-Container${RESET}\\n"
+        printf "%b${GREEN}10)${WHITE} Connect to Frontend-Container${RESET}\\n"
+        printf "%b${GREY}-------------------------------------------------------${RESET}\\n"
+        printf "%b${GREEN}11)${WHITE} Exit${RESET}\\n"
         
         # read choise with color
         read -p "$(printf "%b${CYAN}Enter choice ${PURPLE}[ 1 - 8 ]${RESET} ")" choice
@@ -342,7 +347,13 @@ main() {
             ;;
             7) docker compose -f $INSTALL_REPO/${GIT_NAME}/docker-compose.yml up -d --build
             ;;
-            8) exit 0
+            8) docker exec -it mongo bash
+            ;;
+            9) docker exec -it abw-bs-be bash
+            ;;
+            10) docker exec -it abw-bs-fe bash
+            ;;
+            11) exit 0
             ;;
             *) printf "%b${RED}Error...${RESET}\\n" && sleep 2
             ;;

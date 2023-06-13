@@ -274,7 +274,7 @@ postInstall() {
         case $yn in
             Yes )
                 clear
-                docker-compose -f $INSTALL_REPO/${GIT_NAME}/docker-compose.yml up -d;
+                docker compose -f $INSTALL_REPO/${GIT_NAME}/docker-compose.yml up -d;
                 printf "%b${GREEN}Docker-Compose started${RESET}\\n"
             break;;
             No )

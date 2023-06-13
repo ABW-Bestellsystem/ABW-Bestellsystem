@@ -17,6 +17,8 @@ services:
       - "${FRONTEND_PORT}:80"
     networks:
       - abwms
+    logging:
+      driver: none
  
   backend:
     container_name: abw-bs-be
@@ -55,6 +57,8 @@ services:
       - abwms
     volumes:
       - mongo-data:/data/db
+    logging:
+      driver: none
  
 networks:
   abwms:

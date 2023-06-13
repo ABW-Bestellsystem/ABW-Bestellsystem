@@ -4,7 +4,8 @@ import UserModel from './src/models/userModel';
 import { Response } from 'express';
 import mongoose, { CallbackError } from 'mongoose';
 
-import { generateNewEditorKey, getLatestRelease } from './src/tools/tools';
+import { getLatestRelease } from './src/tools/tools';
+import bcrypt from 'bcrypt';
 import { logger } from './logger-init';
 
 class TokenHandler {
@@ -38,7 +39,7 @@ class TokenHandler {
       { $set: { permissionID: newTokens.PERMISSON_USER } })
       .then((res) => {
 
-        
+
         logger.info(`Updated UserKeys!`);
       })
       .catch((err: CallbackError) => {
@@ -50,7 +51,7 @@ class TokenHandler {
           res('USER');
         }
       }
-    );
+      );
 
     UserModel.updateMany(
       { permissionID: this.tokens.PERMISSON_ADMIN },
@@ -62,7 +63,7 @@ class TokenHandler {
 
         res('ADMIN');
       }
-    );
+      );
 
     UserModel.updateMany(
       { permissionID: this.tokens.PERMISSON_EDITOR },
@@ -74,7 +75,7 @@ class TokenHandler {
 
         res('EDITOR');
       }
-    );
+      );
   };
 
   /**
@@ -114,6 +115,33 @@ class TokenHandler {
       res: 'Keys refreshed! Refresh to login again',
     });
   };
+
+  private async checkFirstStart() {
+    // get first users from db
+    const users = await UserModel.find({});
+
+    if (users.length === 0) {
+
+      if (process.env.FIRST_USER_PASSWORD === undefined) throw new Error('No password for first user set! (process.env.FIRST_USER_PASSWORD)');
+
+      // encrypt password
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(process.env.FIRST_USER_PASSWORD, salt);
+
+      // create first user
+      const user = new UserModel({
+        forename: process.env.FIRST_USER,
+        surname: '☕',
+        username: process.env.FIRST_USER,
+        rank: '1. IT',
+        password: hashedPassword,
+        permissionID: this.tokens.PERMISSON_EDITOR
+      });
+
+      await user.save();
+      logger.info('Created first user!');
+    }
+  }
 
   private async getTokens() {
     await EditorModel.find({}).select(['tokens']).then(
@@ -172,7 +200,7 @@ class TokenHandler {
                 });
               }
             }
-          );
+            );
 
           await this.updateUserKeys(newTokens, (permissionType: string) => {
             logger.error(`Failed to update ${permissionType} permissions`, {
@@ -193,6 +221,9 @@ class TokenHandler {
 
           logger.info('Tokens loaded');
         }
+
+        await this.checkFirstStart();
+
       }
     )
   }

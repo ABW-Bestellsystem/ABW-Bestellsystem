@@ -14,7 +14,6 @@ import fileUpload from 'express-fileupload';
 
 import config from '../config';
 import { logger } from '../logger-init';
-import bcrypt from 'bcrypt';
 import { Request, Response, NextFunction } from 'express';
 import UserModel from './models/userModel';
 
@@ -25,33 +24,6 @@ mongoose
   .connect(config().MONGO_URL)
   .then(async () => {
     logger.info('Connected to MongoDB!');
-
-    // get first users from db
-
-    const users = await UserModel.find({});
-
-    if (users.length === 0) {
-
-      if (process.env.FIRST_USER_PASSWORD === undefined) throw new Error('No password for first user set! (process.env.FIRST_USER_PASSWORD)');
-
-      // encrypt password
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(process.env.FIRST_USER_PASSWORD, salt);
-
-      // create first user
-      const user = new UserModel({
-        forename: process.env.FIRST_USER,
-        surname: '☕',
-        username: process.env.FIRST_USER,
-        rank: '1. IT',
-        password: hashedPassword,
-        permissionID: config().PERMISSON_EDITOR
-      });
-
-      await user.save();
-      logger.info('Created first user!');
-    }
-
   })
   .catch((err) => {
     logger.error('Connection to MongoDB failed!');

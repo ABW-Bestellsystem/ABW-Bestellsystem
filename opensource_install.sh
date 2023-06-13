@@ -328,7 +328,7 @@ main() {
         printf "%b${GREEN}11)${WHITE} Exit${RESET}\\n"
         
         # read choise with color
-        read -p "$(printf "%b${CYAN}Enter choice ${PURPLE}[ 1 - 8 ]${RESET} ")" choice
+        read -p "$(printf "%b${CYAN}Enter choice ${PURPLE}[ 1 - 11 ]${RESET} ")" choice
         
         clear
         case $choice in

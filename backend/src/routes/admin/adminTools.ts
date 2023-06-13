@@ -45,7 +45,6 @@ async function generatePDF(userrank: string, siteID?: string) {
 		args: [
 			"--no-sandbox", 
 			"--disable-setuid-sandbox",
-			'--single-process'
 		],
 	});
 	const page = await browser.newPage();

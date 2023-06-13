@@ -144,15 +144,15 @@ configureCompose() {
     mainurl="${mainurl:-http://localhost:6969}"
 
     # ask if the app is behind a proxy-server. If yes, ask for the proxy-url
-    printf "%b${GREEN}Is the app behind a proxy-server? (default: false)${RESET}\\n"
+    printf "%b${GREEN}Is the app behind a proxy-server? (default: None)${RESET}\\n"
     # print example with credentials
     printf "%b${YELLOW}Example: http://user:password@proxyserver:port${RESET}\\n"
     read -p "Proxy-Server: " proxyserver
-    proxyserver="${proxyserver:-false}"
+    proxyserver="${proxyserver:-''}"
 
-    if [ "$proxyserver" != "false" ]; then
-        echo "PROXY_SERVER=$proxyserver" >> $INSTALL_REPO/${GIT_NAME}/.env
-    fi
+
+    echo "PROXY_SERVER=$proxyserver" >> $INSTALL_REPO/${GIT_NAME}/.env
+
     
     # ask if the app is deployed in a subfolder. If yes, ask for the subfolder
     printf "%b${GREEN}Is the app deployed in a subfolder? (default: '/')${RESET}\\n"
@@ -274,7 +274,7 @@ postInstall() {
         case $yn in
             Yes )
                 clear
-                docker-compose -f $INSTALL_REPO/${GIT_NAME}/docker-compose.yml up -d;
+                docker compose -f $INSTALL_REPO/${GIT_NAME}/docker-compose.yml up -d;
                 printf "%b${GREEN}Docker-Compose started${RESET}\\n"
             break;;
             No )

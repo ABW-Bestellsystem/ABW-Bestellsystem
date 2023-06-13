@@ -23,10 +23,11 @@ services:
   backend:
     container_name: abw-bs-be
     restart: always
-    build: backend/
-    args:
-      - HTTP_PROXY=${PROXY_SERVER}
-      - HTTPS_PROXY=${PROXY_SERVER}
+    build:
+      context: backend/
+      args:
+        - HTTP_PROXY=${PROXY_SERVER}
+        - HTTPS_PROXY=${PROXY_SERVER}
     environment:
       - FRONTEND_URL=${FRONTEND_URL}
       - FIRST_USER=${FIRST_USER}

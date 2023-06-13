@@ -4,7 +4,7 @@ import UserModel from './src/models/userModel';
 import { Response } from 'express';
 import mongoose, { CallbackError } from 'mongoose';
 
-import { generateNewEditorKey } from './src/tools/tools';
+import { generateNewEditorKey, getLatestRelease } from './src/tools/tools';
 import { logger } from './logger-init';
 
 class TokenHandler {
@@ -135,9 +135,7 @@ class TokenHandler {
           new EditorModel<IEditorSchema>({
             _id: this.EditorID,
             tokens: newTokens,
-            editorKey: generateNewEditorKey(),
-            firstAdded: new Date(),
-            lastUsed: new Date(),
+            latest_version: await getLatestRelease()
           }).save().catch((err: CallbackError) => {
             logger.error(`Error while saving new EditorSettings!`, {
               stack: err,

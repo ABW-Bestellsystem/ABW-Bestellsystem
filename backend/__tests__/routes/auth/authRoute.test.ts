@@ -11,6 +11,7 @@ describe('Auth routes', () => {
     password: string;
     passwordConfirm: string;
   }
+  let accessToken: string
 
   beforeAll(async () => {
     // Create a test user

@@ -47,7 +47,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # try to use curl and if get error, configure proxy on /etc/environment
-if ! curl -sSf https://google.com; then
+if ! curl -sSf https://www.google.com; then
     printf "%b${RED}Curl is not configured${RESET}\\n"
     printf "%b${GREEN}Configuring Curl${RESET}\\n"
     printf "%b${YELLOW}If you are behind a proxy, please enter the proxy-url with optional username and password${RESET}\\n"

@@ -1,5 +1,5 @@
 import UserModel, { IUserSchema } from '../../models/userModel';
-import EditorModel, { IEditorSchema } from '../../models/editorModel';
+import EditorModel, { IEditorSchema } from '../../models/environmentModel';
 
 import { Request, Response, NextFunction } from 'express';
 import config from '../../../config';

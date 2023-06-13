@@ -3,7 +3,7 @@ import { header, check, validationResult, body } from 'express-validator';
 import { CallbackError, Error, mongo } from 'mongoose';
 
 import config, { RefreshTokens } from '../../../config';
-import EditorModel from '../../models/editorModel';
+import EditorModel from '../../models/environmentModel';
 import UserModel from '../../models/userModel';
 import NotifyModel, { INotifySchema } from '../../models/notifyModel';
 

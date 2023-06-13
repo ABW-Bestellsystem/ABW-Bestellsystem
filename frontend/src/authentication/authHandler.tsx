@@ -233,7 +233,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signin = async (credentials: SignIn, redirect: VoidFunction) => {
     await axios
-      .post(`${config.url}/auth/userlogin`, credentials)
+      .post(`${config.url}/auth/login`, credentials)
       .then((res: ResponseData) => {
         infoPopup.success(
           'Login erfolgreich',

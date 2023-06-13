@@ -46,6 +46,50 @@ if [[ $EUID -ne 0 ]]; then
     exit 1
 fi
 
+# try to use curl and if get error, configure proxy on /etc/environment
+if ! curl -sSf https://www.google.com; then
+    printf "%b${RED}Curl is not configured${RESET}\\n"
+    printf "%b${GREEN}Configuring Curl${RESET}\\n"
+    printf "%b${YELLOW}If you are behind a proxy, please enter the proxy-url with optional username and password${RESET}\\n"
+    printf "%b${YELLOW}Example: http://user:password@proxyserver:port${RESET}\\n"
+    read -p "Proxy-Server: " proxyserver
+    proxyserver="${proxyserver:-false}"
+
+    if [ "$proxyserver" != "false" ]; then
+        echo "export http_proxy=$proxyserver" >> /etc/environment
+        echo "export https_proxy=$proxyserver" >> /etc/environment
+
+    fi
+    
+    printf "%b${GREEN}Configuring Docker${RESET}\\n"
+
+    # check for docker proxy
+    if [ "$proxyserver" != "false" ]; then
+        mkdir -p /etc/systemd/system/docker.service.d
+        printf "[Service]\nEnvironment=\"HTTP_PROXY=$proxyserver/\"\n" > /etc/systemd/system/docker.service.d/http-proxy.conf
+        printf "[Service]\nEnvironment=\"HTTPS_PROXY=$proxyserver/\"\n" > /etc/systemd/system/docker.service.d/https-proxy.conf
+
+        systemctl daemon-reload
+        systemctl restart docker
+    fi
+fi
+
+# check if curl is installed, if not install it
+if ! command_exists curl; then
+    printf "%b${RED}Curl is not installed${RESET}\\n"
+    printf "%b${GREEN}Installing Curl${RESET}\\n"
+    apt-get update
+    apt-get install -y curl
+fi
+
+# check if sudo is installed, if not install it
+if ! command_exists sudo; then
+    printf "%b${RED}Sudo is not installed${RESET}\\n"
+    printf "%b${GREEN}Installing Sudo${RESET}\\n"
+    apt-get update
+    apt-get install -y sudo
+fi
+
 # check if git is installed, if not install it
 if ! command_exists git; then
     printf "%b${RED}Git is not installed${RESET}\\n"
@@ -68,8 +112,8 @@ if ! command_exists docker; then
     install_dockerparts
 fi
 
-# check if docker-compose is installed, if not install it
-if ! command_exists docker-compose; then
+# check if docker compose is installed, if not install it
+if ! command_exists 'docker compose'; then
     printf "%b${RED}Docker-Compose is not installed${RESET}\\n"
     install_dockerparts
 fi
@@ -98,6 +142,17 @@ configureCompose() {
     printf "%b${GREEN}What should be the main-url? (standard http://localhost:6969)${RESET}\\n"
     read -p "Main-URL: " mainurl
     mainurl="${mainurl:-http://localhost:6969}"
+
+    # ask if the app is behind a proxy-server. If yes, ask for the proxy-url
+    printf "%b${GREEN}Is the app behind a proxy-server? (default: false)${RESET}\\n"
+    # print example with credentials
+    printf "%b${YELLOW}Example: http://user:password@proxyserver:port${RESET}\\n"
+    read -p "Proxy-Server: " proxyserver
+    proxyserver="${proxyserver:-false}"
+
+    if [ "$proxyserver" != "false" ]; then
+        echo "PROXY_SERVER=$proxyserver" >> $INSTALL_REPO/${GIT_NAME}/.env
+    fi
     
     # ask if the app is deployed in a subfolder. If yes, ask for the subfolder
     printf "%b${GREEN}Is the app deployed in a subfolder? (default: '/')${RESET}\\n"
@@ -114,6 +169,11 @@ configureCompose() {
     if [[ $mainurl == */ ]]; then
         mainurl="${mainurl::-1}"
     fi
+
+    # parse the frotend port and write it to the .env file, standard: 80
+    frontendport=$(echo $mainurl | grep -oP ':\K[^/]*')
+    frontendport="${frontendport:-80}"
+    echo "FRONTEND_PORT=$frontendport" >> $INSTALL_REPO/${GIT_NAME}/.env
 
     echo "FRONTEND_URL=$mainurl" >> $INSTALL_REPO/${GIT_NAME}/.env
     echo "SUBFOLDER=$subfolder" >> $INSTALL_REPO/${GIT_NAME}/.env
@@ -159,6 +219,11 @@ configureCompose() {
     read -p "API-URL: " apiurl
     apiurl="${apiurl:-http://localhost:42069}"
     echo "API_URL=$apiurl" >> $INSTALL_REPO/${GIT_NAME}/.env
+
+    # parse the api port and write it to the .env file, standard: 42069
+    apiport=$(echo $apiurl | grep -oP ':\K[^/]*')
+    apiport="${apiport:-42069}"
+    echo "API_PORT=$apiport" >> $INSTALL_REPO/${GIT_NAME}/.env
     
     # ask what the first user should be called (standard: admin)
     printf "%b${GREEN}What should be the first user called? (standard: admin, min. length 3) ${RESET}\\n"
@@ -269,13 +334,13 @@ main() {
             ;;
             3) configureCompose
             ;;
-            4) docker-compose -f $INSTALL_REPO/${GIT_NAME}/docker-compose.yml up -d
+            4) docker compose -f $INSTALL_REPO/${GIT_NAME}/docker-compose.yml up -d
             ;;
-            5) docker-compose -f $INSTALL_REPO/${GIT_NAME}/docker-compose.yml down
+            5) docker compose -f $INSTALL_REPO/${GIT_NAME}/docker-compose.yml down
             ;;
-            6) docker-compose -f $INSTALL_REPO/${GIT_NAME}/docker-compose.yml restart
+            6) docker compose -f $INSTALL_REPO/${GIT_NAME}/docker-compose.yml restart
             ;;
-            7) docker-compose -f $INSTALL_REPO/${GIT_NAME}/docker-compose.yml up -d --build
+            7) docker compose -f $INSTALL_REPO/${GIT_NAME}/docker-compose.yml up -d --build
             ;;
             8) exit 0
             ;;

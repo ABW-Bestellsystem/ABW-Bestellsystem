@@ -18,7 +18,7 @@ import bcrypt from 'bcrypt';
 import { Request, Response, NextFunction } from 'express';
 import UserModel from './models/userModel';
 
-const app = express();
+export const app = express();
 const maxFileSize = 10 * 1024 * 1024;
 
 mongoose

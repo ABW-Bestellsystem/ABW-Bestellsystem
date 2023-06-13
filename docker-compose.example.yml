@@ -3,29 +3,41 @@ services:
   frontend:
     container_name: abw-bs-fe
     restart: always
+    environment:
+      - HTTP_PROXY=${PROXY_SERVER}
+      - HTTPS_PROXY=${PROXY_SERVER}
     build:
       context: frontend/
       args:
         - API_URL=${API_URL}
         - SUBFOLDER=${SUBFOLDER}
+        - HTTP_PROXY=${PROXY_SERVER}
+        - HTTPS_PROXY=${PROXY_SERVER}
     ports:
-      - '127.0.0.1:6969:80'
+      - "${FRONTEND_PORT}:80"
     networks:
       - abwms
+    logging:
+      driver: none
  
   backend:
     container_name: abw-bs-be
     restart: always
     build: backend/
+    args:
+      - HTTP_PROXY=${PROXY_SERVER}
+      - HTTPS_PROXY=${PROXY_SERVER}
     environment:
       - FRONTEND_URL=${FRONTEND_URL}
       - FIRST_USER=${FIRST_USER}
       - FIRST_USER_PASSWORD=${FIRST_USER_PASSWORD}
+      - HTTP_PROXY=${PROXY_SERVER}
+      - HTTPS_PROXY=${PROXY_SERVER}
       - MONGO_USER=${MONGO_USER}
       - MONGO_PASSWORD=${MONGO_PASSWORD}
       - MONGO_DB=${MONGO_DB}
     ports:
-      - "127.0.0.1:42069:42069"
+      - "${API_PORT}:80"
     networks:
       - abwms
     depends_on:
@@ -45,6 +57,8 @@ services:
       - abwms
     volumes:
       - mongo-data:/data/db
+    logging:
+      driver: none
  
 networks:
   abwms:

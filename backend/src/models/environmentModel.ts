@@ -2,10 +2,7 @@ import mongoose from 'mongoose';
 
 export interface IEditorSchema {
   _id: any;
-  editorKey: string;
-  firstAdded: Date;
-  lastUsed: Date;
-  curr_refreshToken?: string;
+  latest_version: string;
   tokens?: Tokens;
 }
 
@@ -19,20 +16,8 @@ export interface Tokens {
 }
 
 const EditorSchema = new mongoose.Schema<IEditorSchema>({
-  editorKey: {
-    type: String,
-    required: true,
-  },
-  firstAdded: {
-    type: Date,
-    required: true,
-  },
-  lastUsed: {
-    type: Date,
-    required: true,
-  },
-  curr_refreshToken: {
-    type: String,
+  latest_version: {
+    type: String
   },
   tokens: {
     SECRET_TOKEN: { type: String },

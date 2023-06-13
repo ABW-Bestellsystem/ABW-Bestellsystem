@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
 //Import Config
 import config from '../../../config';
-import EditorModel from '../../models/editorModel';
+import EditorModel from '../../models/environmentModel';
 
 const authUser = (
   req: Request,

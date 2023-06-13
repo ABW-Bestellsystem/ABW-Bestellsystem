@@ -60,7 +60,7 @@ interface AdminResponses {
 interface AuthResponses {
   post: (
     body: Object,
-    dest: 'register' | 'userlogin' | 'editorlogin' | 'token',
+    dest: 'register' | 'login' | 'token',
     then?: (data: ResponseAxiosSchema) => void
   ) => Promise<void>;
   erase: (

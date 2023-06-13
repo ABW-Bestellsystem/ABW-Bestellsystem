@@ -5,7 +5,7 @@ import bcrypt, { compare } from 'bcrypt';
 import jwt, { VerifyErrors } from 'jsonwebtoken';
 
 import UserModel, { IUserSchema } from '../../models/userModel';
-import EditorModel, { IEditorSchema } from '../../models/editorModel';
+import EditorModel, { IEditorSchema } from '../../models/environmentModel';
 import TokenModel, { ITokenSchema } from '../../models/tokenModel';
 import config from '../../../config';
 import { AUTH } from './authToken';
@@ -106,7 +106,7 @@ router.post(
 
 //Login in existing user
 router.post(
-  '/userlogin',
+  '/login',
   [
     check('username').isLength({ min: 3 }),
     check('password').isLength({ min: 5 }),
@@ -118,18 +118,18 @@ router.post(
     );
 
     if (!user) {
-      authRouteLogger.error('UserID not found');
-      return res.status(404).jsonp({
-        access: true,
-        error: 'UserID not found',
-        res: 'UserID not found',
+      authRouteLogger.error(`UserID ${req.body.username} not found`);
+      return res.status(401).jsonp({
+        access: false,
+        error: 'Authentication failed',
+        res: 'Authentication failed',
       });
     }
 
     if (user.new) {
       authRouteLogger.debug(`login failed: Account ${user._id} not activated`);
       return res.status(403).json({
-        access: true,
+        access: false,
         error: 'Account not activated',
         res: 'Account not activated',
       });
@@ -141,10 +141,10 @@ router.post(
       authRouteLogger.debug(
         `${req.ip} got wrong credentials for user ${req.body.username}`
       );
-      return res.status(400).jsonp({
-        access: true,
-        error: 'wrong credentials',
-        res: 'wrong credentials',
+      return res.status(401).jsonp({
+        access: false,
+        error: 'Authentication failed',
+        res: 'Authentication failed',
       });
     }
 
@@ -200,115 +200,115 @@ router.post(
 );
 
 // //Login Editor
-router.post(
-  '/editorlogin',
-  async (req: Request, res: Response) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      authRouteLogger.debug(
-        'editorKey not valid! checking if Editors are in DB!'
-      );
-      const allEditors = await EditorModel.find({});
+// router.post(
+//   '/editorlogin',
+//   async (req: Request, res: Response) => {
+//     const errors = validationResult(req);
+//     if (!errors.isEmpty()) {
+//       authRouteLogger.debug(
+//         'editorKey not valid! checking if Editors are in DB!'
+//       );
+//       const allEditors = await EditorModel.find({});
 
-      if (allEditors.length === 0) {
-        const FirstEditor = new EditorModel({
-          editorKey: generateNewEditorKey(),
-          firstAdded: new Date(),
-          lastUsed: new Date(),
-        });
+//       if (allEditors.length === 0) {
+//         const FirstEditor = new EditorModel({
+//           editorKey: generateNewEditorKey(),
+//           firstAdded: new Date(),
+//           lastUsed: new Date(),
+//         });
 
-        return FirstEditor.save()
-          .then(() => {
-            authRouteLogger.debug('First Editor added!');
-            return res.jsonp({
-              access: true,
-              res: `First Editor added`,
-            });
-          })
-          .catch((EditorModelError: CallbackError) => {
-            authRouteLogger.error('Error while saving new Editor!', {
-              stack: EditorModelError,
-            });
+//         return FirstEditor.save()
+//           .then(() => {
+//             authRouteLogger.debug('First Editor added!');
+//             return res.jsonp({
+//               access: true,
+//               res: `First Editor added`,
+//             });
+//           })
+//           .catch((EditorModelError: CallbackError) => {
+//             authRouteLogger.error('Error while saving new Editor!', {
+//               stack: EditorModelError,
+//             });
 
-            return res.status(500).jsonp({
-              access: true,
-              error: 'Error while saving new Editor',
-              res: 'Error while saving',
-            });
-          });
-      }
+//             return res.status(500).jsonp({
+//               access: true,
+//               error: 'Error while saving new Editor',
+//               res: 'Error while saving',
+//             });
+//           });
+//       }
 
-      return res.status(400).jsonp({
-        access: true,
-        error: errors.array(),
-        res: 'Pre-Check Failed',
-      });
-    }
+//       return res.status(400).jsonp({
+//         access: true,
+//         error: errors.array(),
+//         res: 'Pre-Check Failed',
+//       });
+//     }
 
-    const editor: IEditorSchema = <IEditorSchema>(
-      await EditorModel.findOne({})
-    );
+//     const editor: IEditorSchema = <IEditorSchema>(
+//       await EditorModel.findOne({})
+//     );
 
-    if (!editor) {
-      authRouteLogger.error(`${req.ip} - got wrong credentials for Editor!`);
-      return res.status(400).jsonp({
-        access: true,
-        error: 'wrong credentials',
-        res: 'wrong credentials',
-      });
-    }
+//     if (!editor) {
+//       authRouteLogger.error(`${req.ip} - got wrong credentials for Editor!`);
+//       return res.status(400).jsonp({
+//         access: true,
+//         error: 'wrong credentials',
+//         res: 'wrong credentials',
+//       });
+//     }
 
-    const accessToken = generateAccessToken(editor._id);
-    const refreshToken = jwt.sign({ _id: editor._id }, config().REFRESH_TOKEN);
+//     const accessToken = generateAccessToken(editor._id);
+//     const refreshToken = jwt.sign({ _id: editor._id }, config().REFRESH_TOKEN);
 
-    const now = new Date();
-    // Add to MongoDB
-    new TokenModel({
-      refreshToken: refreshToken,
-      activeSince: now,
-    })
-      .save()
-      .then(() => {
-        authRouteLogger.debug('Token added for Editor!');
-      });
+//     const now = new Date();
+//     // Add to MongoDB
+//     new TokenModel({
+//       refreshToken: refreshToken,
+//       activeSince: now,
+//     })
+//       .save()
+//       .then(() => {
+//         authRouteLogger.debug('Token added for Editor!');
+//       });
 
-    const overtime = now.getTime() - 5 * 24 * 60 * 60 * 1000;
+//     const overtime = now.getTime() - 5 * 24 * 60 * 60 * 1000;
 
-    if (editor.firstAdded < new Date(overtime)) {
-      authRouteLogger.debug('Editor Key expired! Generating new Key!');
-      await EditorModel.updateOne(
-        { _id: editor._id },
-        {
-          editorKey: generateNewEditorKey(),
-          firstAdded: new Date(),
-        }
-      );
+//     if (editor.firstAdded < new Date(overtime)) {
+//       authRouteLogger.debug('Editor Key expired! Generating new Key!');
+//       await EditorModel.updateOne(
+//         { _id: editor._id },
+//         {
+//           editorKey: generateNewEditorKey(),
+//           firstAdded: new Date(),
+//         }
+//       );
 
-      return res.status(400).jsonp({
-        access: true,
-        error: 'Editor Key expired',
-        res: 'Editor Key expired',
-      });
-    }
+//       return res.status(400).jsonp({
+//         access: true,
+//         error: 'Editor Key expired',
+//         res: 'Editor Key expired',
+//       });
+//     }
 
-    await EditorModel.updateOne(
-      { _id: editor._id },
-      {
-        curr_refreshToken: refreshToken,
-        lastUsed: now,
-      }
-    );
+//     await EditorModel.updateOne(
+//       { _id: editor._id },
+//       {
+//         curr_refreshToken: refreshToken,
+//         lastUsed: now,
+//       }
+//     );
 
-    authRouteLogger.debug(
-      'sending accessToken & refreshToken with status 200!'
-    );
-    res.header('accessToken', accessToken);
-    res.status(200).jsonp({
-      access: true,
-      res: { accessToken: accessToken, refreshToken: refreshToken },
-    });
-  }
-);
+//     authRouteLogger.debug(
+//       'sending accessToken & refreshToken with status 200!'
+//     );
+//     res.header('accessToken', accessToken);
+//     res.status(200).jsonp({
+//       access: true,
+//       res: { accessToken: accessToken, refreshToken: refreshToken },
+//     });
+//   }
+// );
 
 //Refresh Token
 router.post(
@@ -359,12 +359,12 @@ router.post(
   }
 );
 
-//Log out user or Editor
+//Log out User
 router.delete(
   '/logout',
   [AUTH, PERMS.USER, check('refreshToken').isJWT(), PERMS.VALIDATE],
   (req: Request, res: Response) => {
-    //DONE: delete from MongoDB
+    //Delete from MongoDB
     TokenModel.findOneAndDelete(
       { refreshToken: req.header('refreshToken') }).then((data: ITokenSchema | null) => {
         (data: Array<ITokenSchema>) => {

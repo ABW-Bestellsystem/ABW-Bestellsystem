@@ -27,7 +27,7 @@ const PrivacyPage = (props: any) => {
           <h4>Läuferdaten</h4>
           <p>
             Wir speichern die Anzahl, wie oft Sie Läufer waren, um Sie bei einer
-            zufälligen Auswahl gegenüber anderen Nutzern zu weniger oder mehr zu gewichten.
+            zufälligen Auswahl gegenüber anderen Nutzern weniger oder mehr zu gewichten.
           </p>
           <h4>Ausbildungsjahr</h4>
           <p>
@@ -41,7 +41,7 @@ const PrivacyPage = (props: any) => {
           <p>
             Wir verwenden Ihre <b>Bestellung</b>, um Sie in der Bestellliste
             eintragen zu können. Diese wird dann ohne Namensnennung Ihrerseits
-            (mit außnahme des Bestellsenders) an die Emailempfansstelle
+            (mit Außnahme des Bestellsenders) an die Emailempfangsstelle
             geschickt! <br />
             Admins können Bestellungen individuell von Nutzern einsehen, aber nicht verändern. <br />
             Die Bestellungen werden langzeitig, anonym & nur auf dem Hostserver für

@@ -23,9 +23,8 @@ Thanks for using our opensource version of the ABW Bestellsystem. This is a web 
 
 1. Download the opensource_install.sh
 2. Run the script with `sudo bash opensource_install.sh`
-3. Select 1) to download the latest version
-4. Select 3) to configure your installation
-5. done
+3. Select 1) to download the latest version & configure your installation
+4. done
 
 ### After first login:
 

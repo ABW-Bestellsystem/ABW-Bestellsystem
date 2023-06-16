@@ -19,7 +19,9 @@ export function permissionIDTranslator(ID: string, config: any) {
 }
 
 export async function getLatestRelease() {
-	const LatestRelase = (await fetch('https://github.com/ABW-Bestellsystem/ABW-Bestellsystem/releases/latest')).url.split("/");
+	// const LatestRelase = (await fetch('https://github.com/ABW-Bestellsystem/ABW-Bestellsystem/releases/latest')).url.split("/");
 
-	return LatestRelase[LatestRelase.length - 1]
+	// return LatestRelase[LatestRelase.length - 1]
+
+	return 'v1.0.0'
 }

@@ -139,9 +139,9 @@ configureCompose() {
     fi
     
     # ask what main-url should be used (standard: http://localhost:80)
-    printf "%b${GREEN}What should be the main-url? (standard http://localhost:80)${RESET}\\n"
+    printf "%b${GREEN}What should be the main-url? (standard http://localhost)${RESET}\\n"
     read -p "Main-URL: " mainurl
-    mainurl="${mainurl:-http://localhost:80}"
+    mainurl="${mainurl:-http://localhost}"
 
     # ask if the app is behind a proxy-server. If yes, ask for the proxy-url
     printf "%b${GREEN}Is the app behind a proxy-server? (default: None)${RESET}\\n"

@@ -138,10 +138,10 @@ configureCompose() {
         rm $INSTALL_REPO/${GIT_NAME}/.env
     fi
     
-    # ask what main-url should be used (standard: http://localhost:6969)
-    printf "%b${GREEN}What should be the main-url? (standard http://localhost:6969)${RESET}\\n"
+    # ask what main-url should be used (standard: http://localhost:80)
+    printf "%b${GREEN}What should be the main-url? (standard http://localhost:80)${RESET}\\n"
     read -p "Main-URL: " mainurl
-    mainurl="${mainurl:-http://localhost:6969}"
+    mainurl="${mainurl:-http://localhost:80}"
 
     # ask if the app is behind a proxy-server. If yes, ask for the proxy-url
     printf "%b${GREEN}Is the app behind a proxy-server? (default: None)${RESET}\\n"

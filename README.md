@@ -79,7 +79,7 @@ Execute the following command to restore a backup:
 ```bash
 docker exec -i <mongodb container> sh -c 'mongorestore --authenticationDatabase admin -u <user> -p <password> --db <database> --archive' < <backup file>
 ```
-After that you need to check the database if there is a duplicate entry for the editor collection. If so, you need to delete the duplicate entry.
+After that you need to check the database if there is a duplicate entry for the editor collection. If so, you need to delete the duplicate entry (Most of the time its the first entry that needs to be deleted).
 To do so, execute the following command:
 
 ### Access the container

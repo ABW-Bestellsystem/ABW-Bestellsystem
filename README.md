@@ -5,7 +5,7 @@
 </p>
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/ABW-Bestellsystem/ABW-Bestellsystem)
-Thanks for using our opensource version of the ABW Bestellsystem. This is a web application to manage orders for Azubis. It is written in ReactJS and NodeJS and uses MongoDB as database.
+Thanks for using our opensource version of the ABW Bestellsystem. This is a web application to manage orders for Azubis. It is written in ReactJS, NodeJS and uses MongoDB as database.
 
 ## Features
 - Multiple Sites for mutiple locations to order from

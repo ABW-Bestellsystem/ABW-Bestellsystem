@@ -14,6 +14,7 @@ import PrivacyPage from './Pages/privacyInfoPage/privacyInfoPage';
 import EditorDashboardPage from './Pages/editor/dashboardPage/editorDashboardPage';
 import CustomPage from './Pages/editor/customPage/customPage';
 import Statistics from './Pages/editor/statisticsPage/Statistics';
+import BackupPage from './Pages/editor/backupPage/backupPage';
 
 function App() {  
   return (
@@ -83,6 +84,14 @@ function App() {
           element={
             <Auth>
               <Statistics />
+            </Auth>
+          }
+        />
+        <Route
+          path="editor/backup"
+          element={
+            <Auth>
+              <BackupPage />
             </Auth>
           }
         />

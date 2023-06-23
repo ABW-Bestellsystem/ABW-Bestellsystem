@@ -21,6 +21,11 @@ function Menu() {
           Statistiken
         </Button>
       </Link>
+      <Link style={{ color: 'white' }} to="/editor/backup">
+        <Button className='me-3' style={{ width: "150px" }} variant='primary'>
+          Backup
+        </Button>
+      </Link>
       <Dropdown className='d-inline-block'>
         <Dropdown.Toggle variant="success" id="dropdown-basic">
           Bestellseiten ({auth.sites.length})

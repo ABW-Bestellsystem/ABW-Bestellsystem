@@ -71,7 +71,7 @@ router.get('/all', [AUTH, PERMS.EDITOR], async (req: Request, res: Response) => 
 
 });
 
-router.get('/create', async (req: Request, res: Response) => {
+router.get('/create', [AUTH, PERMS.EDITOR], async (req: Request, res: Response) => {
    BackupHandlerInstance.createBackupWithBuffer().then(value => {
 
       // set headers for file download

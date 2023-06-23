@@ -77,6 +77,7 @@ async function compile(templateName: string, data: any) {
 	//TODO: Zu relativem Pfad ändern
 	const filepath = `src/handlebarPages/${templateName}.hbs`;
 
+	// file is read as a string
 	const html = await fs.readFile(filepath, { encoding: "utf-8" });
 
 	return hbs.compile(html)(data);

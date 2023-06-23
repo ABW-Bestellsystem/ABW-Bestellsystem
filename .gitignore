@@ -39,3 +39,6 @@ docker-compose.yml
 install.sh
 test.sh
 # mongo-init.js
+
+# exclude all data files in the backup folder but keep the folder
+backend/backup/*

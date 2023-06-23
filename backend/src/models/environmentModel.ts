@@ -4,6 +4,13 @@ export interface IEditorSchema {
   _id: any;
   latest_version: string;
   tokens?: Tokens;
+  backup?: IBackup;
+}
+
+export interface IBackup {
+  enabled?: boolean;
+  cronjob?: string;
+  lastBackup?: Date;
 }
 
 export interface Tokens {
@@ -25,6 +32,11 @@ const EditorSchema = new mongoose.Schema<IEditorSchema>({
     PERMISSON_USER: { type: String },
     PERMISSON_ADMIN: { type: String },
     PERMISSON_EDITOR: { type: String },
+  },
+  backup: {
+    enabled: { type: Boolean },
+    cronjob: { type: String },
+    lastBackup: { type: Date },
   },
 });
 

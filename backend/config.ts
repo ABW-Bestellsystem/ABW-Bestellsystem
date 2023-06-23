@@ -3,10 +3,227 @@ import { randomBytes } from 'crypto';
 import UserModel from './src/models/userModel';
 import { Response } from 'express';
 import mongoose, { CallbackError } from 'mongoose';
+import cron, { Job, scheduleJob } from 'node-schedule'
 
 import { getLatestRelease } from './src/tools/tools';
 import bcrypt from 'bcrypt';
-import { logger } from './logger-init';
+import { backupPageLogger, logger } from './logger-init';
+import { promisify } from 'util';
+import { exec, spawn } from 'child_process';
+
+class BackupHandler {
+  public backupJob?: Job;
+  public isEnabled: boolean = false;
+
+  constructor() { }
+
+  public async getBackupSettings(): Promise<IEditorSchema | null> {
+    return await EditorModel.findOne({}).select(['backup']);
+  }
+
+  public async clearWholeDatabase() {
+    const db = mongoose.connection.db;
+
+    // remove all collections from all models from database
+    // Get all collections
+    const collections = await db.listCollections().toArray();
+
+    // Create an array of collection names and drop each collection
+    collections
+      .map((collection) => collection.name)
+      .forEach(async (collectionName) => {
+        db.dropCollection(collectionName).then((done) => {
+          if (done) {
+            backupPageLogger.debug(`dropped collection ${collectionName}`);
+          }
+        }).catch((err) => {
+          backupPageLogger.error(`failed to drop collection ${collectionName}`);
+        });
+      });
+  }
+
+  public async restoreBackup(file: Buffer) {
+
+    const restoreCommand = `mongorestore
+    ${process.env.MONGO_DB ? ' --db=' + process.env.MONGO_DB : ''} \
+    ${process.env.MONGO_USER ? ' --username=' + process.env.MONGO_USER : ''} \
+    ${process.env.MONGO_PASSWORD ? ' --password=' + process.env.MONGO_PASSWORD : ''} \
+    ${process.env.MONGO_PASSWORD ? ' --authenticationDatabase=admin' : ''} \
+    --archive`.replace(/\s\s+/g, ' ');
+
+    return new Promise<boolean>((resolve, reject) => {
+      const restoreProcess = spawn('sh', ['-c', restoreCommand]);
+
+      restoreProcess.stdin.write(file);
+      restoreProcess.stdin.end();
+
+      restoreProcess.stdin.on('exit', (code, signal) => {
+        if (code === 0) {
+          backupPageLogger.info(`Backup restored successfully!`);
+          resolve(true);
+        } else {
+          backupPageLogger.error(`Backup restore failed with code ${code} and signal ${signal}`);
+          reject(false);
+        }
+      });
+
+      restoreProcess.stdin.on('close', () => {
+        backupPageLogger.info(`Backup restore closed!`);
+        resolve(true);
+      });
+
+      restoreProcess.stdin.on('error', (error) => {
+        backupPageLogger.error(`Backup restore failed with error: ${error}`);
+        reject(false);
+      });
+
+    });
+  }
+
+  public stopBackup() {
+    if (this.backupJob) {
+      this.backupJob.cancel();
+      this.backupJob = undefined;
+
+      EditorModel.updateOne({}, { $set: { 'backup.enabled': false } }).then(() => {
+        backupPageLogger.info(`Backup disabled!`);
+      }).catch((err: CallbackError) => {
+        logger.error(`Error while disabling backup!`, {
+          stack: err,
+        });
+      });
+    }
+  }
+
+  public async updateBackupState(enabled: boolean) {
+    if (enabled) {
+      this.startBackup();
+    }
+    else {
+      this.stopBackup();
+    }
+  }
+
+  public async updateBackupCronjob(cronjob: string) {
+    if (this.backupJob) {
+      // rescedule cronjob
+      backupPageLogger.info(`Rescheduling backup cronjob to ${cronjob}`);
+      this.backupJob.reschedule(cronjob);
+    }
+
+    EditorModel.updateOne({}, { $set: { 'backup.cronjob': cronjob } }).then(() => {
+      backupPageLogger.info(`Backup cronjob updated to ${cronjob}`);
+    }).catch((err: CallbackError) => {
+      backupPageLogger.error(`Error while updating backup cronjob!`, {
+        stack: err,
+      })
+    });
+  }
+
+  public async startBackup(): Promise<void> {
+    // get backup settings from db
+    const backupSettings = await this.getBackupSettings();
+
+    if (backupSettings === null) {
+      backupPageLogger.error('No Editorsettings settings found!');
+      return;
+    }
+
+    // check if backupsettings are in db
+    if (backupSettings.backup?.enabled === undefined) {
+      backupPageLogger.error('No backup settings found! Creating default settings...');
+
+      // create default backup settings
+      const defaultBackupSettings = {
+        enabled: false,
+        cronjob: '0 0 * * *',
+      };
+
+      // save default backup settings to db
+      await EditorModel.updateOne({}, { $set: { backup: defaultBackupSettings } });
+
+      return this.startBackup();
+    }
+    else if (backupSettings.backup?.enabled) {
+      backupPageLogger.info('Backup enabled!');
+
+      this.backupJob = cron.scheduleJob(backupSettings.backup.cronjob ?? '0 0 * * *', async () => {
+        backupPageLogger.info('Starting backup!');
+
+        const dumpFilePath = `./backup/ABWBS_${new Date().toISOString().replaceAll(':', '-')}.dump`;
+        const dumpCommand = `mongodump
+        ${process.env.MONGO_DB ? ' --db=' + process.env.MONGO_DB : ''} \
+        ${process.env.MONGO_USER ? ' --username=' + process.env.MONGO_USER : ''} \
+        ${process.env.MONGO_PASSWORD ? ' --password=' + process.env.MONGO_PASSWORD : ''} \
+        ${process.env.MONGO_PASSWORD ? ' --authenticationDatabase=admin' : ''} \
+        --archive=${dumpFilePath}`.replace(/\s\s+/g, ' ');
+
+        const dumpResult = await promisify(exec)(dumpCommand);
+
+        if (dumpResult.stdout && dumpResult.stderr) {
+          backupPageLogger.error(`Backup failed: ${dumpResult.stderr} `);
+          return false;
+        }
+
+        backupPageLogger.info(`Backup succeeded: ${dumpFilePath}`);
+      });
+    }
+
+    return;
+  }
+
+  // public async createBackupWithBuffer() {
+  //   const dumpCommand = `mongodump
+  //   ${process.env.MONGO_DB ? ' --db=' + process.env.MONGO_DB : ''} \
+  //   ${process.env.MONGO_USER ? ' --username=' + process.env.MONGO_USER : ''} \
+  //   ${process.env.MONGO_PASSWORD ? ' --password=' + process.env.MONGO_PASSWORD : ''} \
+  //   ${process.env.MONGO_PASSWORD ? ' --authenticationDatabase=admin' : ''} \
+  //   --archive`.replace(/\s\s+/g, ' ');    
+
+  //   const dumpResult = await promisify(exec)(dumpCommand);
+
+  //   if (!dumpResult.stdout && dumpResult.stderr) {
+  //     backupPageLogger.error(`Backup failed: ${dumpResult.stderr} `);
+  //     throw new Error(`Backup failed: ${dumpResult.stderr} `);
+  //   }
+
+  //   // return a buffer that is converted to base64 with the backup
+  //   return Buffer.from(dumpResult.stdout).toString('utf-8');
+  // }
+
+  public async createBackupWithBuffer(): Promise<Buffer> {
+    return new Promise<Buffer>((resolve, reject) => {
+      const mongodumpCommand = `mongodump \
+        ${process.env.MONGO_DB ? `--db=${process.env.MONGO_DB}` : ''} \
+        ${process.env.MONGO_USER ? `--username=${process.env.MONGO_USER}` : ''} \
+        ${process.env.MONGO_PASSWORD ? `--password=${process.env.MONGO_PASSWORD}` : ''} \
+        ${process.env.MONGO_PASSWORD ? '--authenticationDatabase=admin' : ''} \
+        --archive`;
+
+      const mongodumpProcess = spawn('sh', ['-c', mongodumpCommand]);
+      const buffers: Buffer[] = [];
+
+      mongodumpProcess.stdout.on('data', (data) => {
+        buffers.push(data);
+      });
+
+      mongodumpProcess.on('exit', (code, signal) => {
+        if (code === 0) {
+          const buffer = Buffer.concat(buffers);
+          resolve(buffer);
+        } else {
+          logger.error(`mongodump failed with code ${code} and signal ${signal}`);
+          reject(`mongodump failed with code ${code} and signal ${signal}`);
+        }
+      });
+
+      mongodumpProcess.on('error', (error) => {
+        logger.error(`mongodump failed with error: ${error}`);
+        reject(error);
+      });
+    });
+  }
+}
 
 class TokenHandler {
   public tokens: Tokens;
@@ -20,7 +237,10 @@ class TokenHandler {
       PERMISSON_ADMIN: '',
       PERMISSON_EDITOR: '',
     };
-    this.getTokens();
+
+    this.getTokens().then(async () => {
+      await BackupHandlerInstance.startBackup();
+    });
   }
 
   generateNewToken = () => {
@@ -163,7 +383,12 @@ class TokenHandler {
           new EditorModel<IEditorSchema>({
             _id: this.EditorID,
             tokens: newTokens,
-            latest_version: await getLatestRelease()
+            latest_version: await getLatestRelease(),
+            backup: {
+              enabled: false,
+              cronjob: '0 0 * * *',
+              lastBackup: new Date(),
+            },
           }).save().catch((err: CallbackError) => {
             logger.error(`Error while saving new EditorSettings!`, {
               stack: err,
@@ -222,7 +447,7 @@ class TokenHandler {
           logger.info('Tokens loaded');
         }
 
-        await this.checkFirstStart();
+        await this.checkFirstStart()
 
       }
     )
@@ -231,6 +456,13 @@ class TokenHandler {
   public getConfig() {
     return {
       ...this.tokens,
+      // BACKUP: {
+      //   enabled: this.isEnabled,
+      //   stop: this.stopBackup,
+      //   start: this.startBackup,
+      //   updateState: this.updateBackupState,
+      //   updateCronjob: this.updateBackupCronjob,
+      // },
       EDITOR_URL: process.env.EDITOR_URL,
       FRONTEND_URL: process.env.FRONTEND_URL,
       PORT: process.env.PORT || 42069,
@@ -242,7 +474,9 @@ class TokenHandler {
   }
 }
 
+
 const TokenHandlerInstance = new TokenHandler();
 
+export const BackupHandlerInstance = new BackupHandler();
 export const RefreshTokens = TokenHandlerInstance.refreshTokens;
 export default () => TokenHandlerInstance.getConfig();

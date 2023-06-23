@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios, { Axios, AxiosError, AxiosResponse } from 'axios';
 import { AuthContextType, useAuth } from '../authentication/authHandler';
 import config from '../config';
 import infoPopup from './infoPopup';
@@ -160,6 +160,24 @@ interface StatisticResponses {
   ) => Promise<void>;
 }
 
+interface BackupResponses {
+  get: (
+    body: Object,
+    dest: 'settings' | 'all' | 'create',
+    then?: (data: ResponseAxiosSchema) => void
+  ) => Promise<void>;
+  post: (
+    body: Object,
+    dest: 'restore',
+    then?: (data: ResponseAxiosSchema) => void
+  ) => Promise<void>;
+  put: (
+    body: Object,
+    dest: 'settings',
+    then?: (data: ResponseAxiosSchema) => void
+  ) => Promise<void>;
+}
+
 async function Requester(
   method: "GET" | "POST" | "PUT" | "DELETE",
   path: string,
@@ -179,8 +197,20 @@ async function Requester(
       },
       params: method === "GET" ? body : undefined,
       data: body,
+      responseType: dest === 'create' ? 'blob' : 'json',
     })
-      .then((res: ResponseData) => {
+      .then((res: AxiosResponse & ResponseData) => {
+        if (res.headers['content-type'] === 'application/octet-stream') {
+          const blob = new Blob([res.data], { type: 'application/octet-stream' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+        
+          link.href = url;
+          link.setAttribute('download', res.data?.res?.name ?? 'backup.dump');
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
         return { data: res.data, error: res.data.error };
       })
       .catch((err) => {
@@ -309,6 +339,20 @@ function RequestHandler(
 }
 
 /**
+ * RequestHandler for Backups
+ * @param auth authentication for API-Requests
+ * @param navigate destination for errors
+ * @returns get, post, put, erase
+*/
+function BackupRequest(
+  auth: AuthContextType,
+  navigate?: VoidFunction,
+  siteID?: string
+) {
+  return RequestHandler('backup', auth, navigate, siteID) as BackupResponses;
+}
+
+/**
  * RequestHandler for Admins
  *
  * @param auth authentication for API-Requests
@@ -425,5 +469,6 @@ export {
   AuthRequest,
   EditorRequest,
   CustomPageRequest,
+  BackupRequest,
   StatisticRequest
 };

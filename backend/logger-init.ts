@@ -28,6 +28,11 @@ const logConfig = {
 
 const logger = createLogger(logConfig);
 
+const backupPageLogger = createLogger({
+  ...logConfig,
+  defaultMeta: { service: 'BACKUP' },
+});
+
 const adminRouteLogger = createLogger({
   ...logConfig,
   defaultMeta: { service: 'MANAGE' },
@@ -65,5 +70,6 @@ export {
   customPageLogger,
   editorRouteLogger,
   menuRouteLogger,
+  backupPageLogger,
   userRouteLogger,
 };

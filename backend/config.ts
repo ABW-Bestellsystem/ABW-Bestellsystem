@@ -363,7 +363,7 @@ class TokenHandler {
     }
   }
 
-  private async getTokens() {
+  public async getTokens() {
     await EditorModel.find({}).select(['tokens']).then(
       async (docs: Array<{ tokens?: Tokens; _id: any }>) => {
         // if no EditorSettings are found, create a new one
@@ -436,6 +436,7 @@ class TokenHandler {
           this.tokens = newTokens;
           logger.info('New Tokens created');
         } else {
+
           this.EditorID = docs[0]._id;
 
           // Insert Tokens into tokens-object via for loop
@@ -476,7 +477,7 @@ class TokenHandler {
 
 
 const TokenHandlerInstance = new TokenHandler();
+const BackupHandlerInstance = new BackupHandler();
 
-export const BackupHandlerInstance = new BackupHandler();
-export const RefreshTokens = TokenHandlerInstance.refreshTokens;
+export { TokenHandlerInstance, BackupHandlerInstance };
 export default () => TokenHandlerInstance.getConfig();

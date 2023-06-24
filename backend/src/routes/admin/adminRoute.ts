@@ -419,8 +419,8 @@ router.get(
   [AUTH, PERMS.ADMIN, check('siteid').isMongoId(), PERMS.VALIDATE],
   async (req: Request, res: Response) => {
 
-    UserSettingsModel.findOne({ rank: req.body.rank }).then((userSettings: IUserSettings | null) => {
-      if (!userSettings) {
+    UserSettingsModel.findOne({ rank: req.body.rank }).select(["-_id", "-runners._id"]).then((userSettings: IUserSettings | null) => {
+      if (userSettings === null) {
         adminRouteLogger.debug('No userSettings found! creating new one!');
         new UserSettingsModel({
           rank: req.body.rank,
@@ -454,13 +454,14 @@ router.get(
               res: userSettingsModelError,
             });
           });
+      } else {
+        adminRouteLogger.debug('sending userSettings to client with status 200');
+        return res.status(200).jsonp({
+          access: true,
+          res: userSettings,
+        });
       }
 
-      adminRouteLogger.debug('sending userSettings to client with status 200');
-      return res.status(200).jsonp({
-        access: true,
-        res: userSettings,
-      });
     }).catch((userModelError: MongooseError) => {
       adminRouteLogger.error('Error while finding users!', {
         stack: userModelError,

@@ -2,7 +2,7 @@ import { Request, Response, Router } from 'express';
 import { header, check, validationResult, body } from 'express-validator';
 import { CallbackError, Error, mongo } from 'mongoose';
 
-import config, { RefreshTokens } from '../../../config';
+import config, { TokenHandlerInstance } from '../../../config';
 import EditorModel from '../../models/environmentModel';
 import UserModel from '../../models/userModel';
 import NotifyModel, { INotifySchema } from '../../models/notifyModel';
@@ -217,7 +217,7 @@ router.put(
  * @param {string} editorKey
  */
 router.put('/keys', [AUTH, PERMS.EDITOR], async (req: Request, res: Response) => {
-  await RefreshTokens(res).catch((err: Error) => {
+  await TokenHandlerInstance.refreshTokens(res).catch((err: Error) => {
     if (err) {
       editorRouteLogger.error(`Error while refreshing tokens!`, {
         stack: err,

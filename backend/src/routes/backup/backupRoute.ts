@@ -4,7 +4,7 @@ import PERMS from '../auth/checkPerms';
 import EditorModel, { IBackup } from '../../models/environmentModel';
 import { check } from 'express-validator';
 import { backupPageLogger } from '../../../logger-init';
-import config, { BackupHandlerInstance } from '../../../config';
+import config, { BackupHandlerInstance, TokenHandlerInstance } from '../../../config';
 import { UploadedFile } from 'express-fileupload';
 import mongoose from 'mongoose';
 import { createReadStream } from 'fs';
@@ -105,6 +105,10 @@ router.post('/restore', [AUTH, PERMS.EDITOR], async (req: Request, res: Response
       await BackupHandlerInstance.clearWholeDatabase();
       // restore backup
       BackupHandlerInstance.restoreBackup(data).then(() => {
+
+         // refresh the configinstance of the database
+         TokenHandlerInstance.getTokens();
+
          return res.status(200).json({
             access: true,
             res: 'Datenbank erfolgreich wiederhergestellt',

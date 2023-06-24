@@ -74,19 +74,19 @@ function Register(props: RegisterProps) {
           </Row>
           <Row className="mt-3">
             <Col>
-              <Form.Label>Password</Form.Label>
+              <Form.Label>Passwort</Form.Label>
               <FormControl
                 type="password"
                 name="password"
-                placeholder="Enter Password"
+                placeholder="Passwort eingeben"
               />
             </Col>
             <Col>
-              <Form.Label>Repeat Password</Form.Label>
+              <Form.Label>Passwort wiederholen</Form.Label>
               <FormControl
                 type="password"
                 name="passwordConfirm"
-                placeholder="Repeat Password"
+                placeholder="Passwort wiederholen"
               />
             </Col>
           </Row>
@@ -114,14 +114,14 @@ function Register(props: RegisterProps) {
         </Modal.Body>
         <Modal.Footer>
           <Button type="submit" variant="primary">
-            Register
+            Registrieren
           </Button>
           <Button
             onClick={props.onHide}
             className="ms-auto"
             variant="secondary"
           >
-            Close
+            Schließen
           </Button>
         </Modal.Footer>
       </Form>
@@ -185,23 +185,23 @@ function LoginPage() {
           <Form onSubmit={(e) => handleLoginSubmit(e)}>
             <h2>ABW Bestellsystem Login</h2>
             <FormGroup controlId="formBasicText">
-              <Form.Label>Username</Form.Label>
+              <Form.Label>Benutzername</Form.Label>
               <FormControl
                 type="text"
-                placeholder="Enter Username"
+                placeholder="Benutzername eingeben"
                 name="username"
               />
             </FormGroup>
 
             <FormGroup className="mb-4" controlId="formBasicPassword">
-              <Form.Label>Password</Form.Label>
+              <Form.Label>Passwort</Form.Label>
               <FormControl
                 type="password"
-                placeholder="Password"
+                placeholder="Passwort eingeben"
                 name="password"
               />
               <Form.Text className="text-muted">
-                We'll never share your password with anyone else.
+                Wir werden dein Passwort niemals mit jemandem teilen.
               </Form.Text>
             </FormGroup>
             <div className="d-flex">

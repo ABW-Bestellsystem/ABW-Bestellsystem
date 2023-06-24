@@ -60,6 +60,7 @@ app.use(
       'http://localhost:5173',
       'http://localhost:4173',
     ],
+    exposedHeaders: ['Content-Disposition']
   })
 );
 logger.debug(`Module 'cors' initialized!`);

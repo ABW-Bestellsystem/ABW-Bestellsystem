@@ -204,9 +204,12 @@ async function Requester(
           const blob = new Blob([res.data], { type: 'application/octet-stream' });
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
-        
+
+          // grep the filename from the content-disposition header
+          const filename = (res.headers['content-disposition']).split('filename=')[1]
+
           link.href = url;
-          link.setAttribute('download', res.data?.res?.name ?? 'backup.dump');
+          link.setAttribute('download', filename ?? 'backup.dump');
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);

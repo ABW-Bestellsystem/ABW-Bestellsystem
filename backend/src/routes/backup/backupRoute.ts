@@ -74,9 +74,12 @@ router.get('/all', [AUTH, PERMS.EDITOR], async (req: Request, res: Response) => 
 router.get('/create', [AUTH, PERMS.EDITOR], async (req: Request, res: Response) => {
    BackupHandlerInstance.createBackupWithBuffer().then(value => {
 
+      // create dump filename from ISO Date and remove ':' and '.' from time
+      const filename = `backup_${new Date().toISOString().replace(/:/g, '-').replace(/\./g, '-')}.dump`;
+
       // set headers for file download
       res.setHeader('Content-Type', 'application/octet-stream');
-      res.setHeader('Content-Disposition', 'attachment; filename=backup.dump');
+      res.setHeader('Content-Disposition', 'attachment; filename=' + filename);
       res.write(value);
       res.end();
 
